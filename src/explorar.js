@@ -1,0 +1,11 @@
+const ventas = require('./datos');
+console.log("------ Cantidad de registros ------");
+console.log(ventas.length);
+console.log("------ Primer registro ------");
+console.log(ventas[0]);
+console.log("------ Último registro ------");
+console.log(ventas[ventas.length - 1]);
+console.log("------producto en la posicion 4------");
+console.log(ventas[4].producto);
+console.log("------Tabla completa de ventas------");
+console.table(ventas);
