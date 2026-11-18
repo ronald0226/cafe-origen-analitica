@@ -45,47 +45,44 @@ Cada registro de `ventas` contiene las siguientes propiedades:
 - **¿Qué transformo?** Normalizo el nombre del producto (quito espacios al inicio y al final y convierto a minúsculas para la clave) y calculo el valor de cada venta como `precio * cantidad`.
 - **¿Qué acumulo?** El valor vendido de cada producto en un mapa.
 - **¿Cómo agrupo?** Por nombre de producto normalizado, de modo que diferencias de mayúsculas y espacios externos no creen grupos separados; luego ordeno los grupos de mayor a menor valor y devuelvo los primeros `k`.
-Duplicidad de ciudades (Ej: "Bogotá" aparecía dos veces)
+### Duplicidad de ciudades
 
-    Síntoma: Al agrupar o listar las ventas por ciudad, una misma localidad aparecía fragmentada en múltiples entradas (ej. "Bogotá" y "Bogota", o "Medellín" y "medellín").
+**Síntoma:** Al agrupar o listar las ventas por ciudad, una misma localidad podía aparecer fragmentada en varias entradas (por ejemplo, «Medellín» y «medellín»).
 
-    Entrada que lo produce: Transacciones con variaciones tipográficas en la propiedad ciudad debido a tildes omitidas, mayúsculas o espacios adicionales.
+**Entrada que lo produce:** Transacciones con variaciones tipográficas en la propiedad `ciudad`, como diferencias entre mayúsculas y minúsculas o espacios adicionales.
 
-    Hipótesis: El objeto diccionario utilizado como acumulador evaluaba las llaves de forma literal y estricta, tratando cada variante como una clave única e independiente en memoria.
+**Hipótesis:** El objeto utilizado como acumulador evaluaba las claves de forma literal y estricta, tratando cada variante como una clave distinta.
 
-    Prueba realizada: Simulación de inserción de claves mixtas en un objeto de acumulación e inspección de las llaves resultantes en la consola.
+**Prueba realizada:** Simulación de la inserción de claves con distintas mayúsculas en un objeto acumulador e inspección de las claves resultantes en la consola.
 
-    Causa: Falta de normalización o estandarización de las cadenas de texto antes de utilizarlas como llaves de agrupación.
+**Causa:** Falta de normalización de las cadenas antes de utilizarlas como claves de agrupación.
 
-    Corrección y Demostración en la versión actual:
+**Corrección y demostración en la versión actual:** Antes de agrupar, se aplica `.trim()` y `.toLocaleLowerCase()`. Así, variantes como «medellín» y «Medellín» se unifican. Esta normalización no elimina tildes, por lo que «Bogotá» y «Bogota» todavía se consideran claves diferentes.
 
-        Se aplica una limpieza previa a las cadenas de texto utilizando métodos de estandarización como .trim() y .toLocaleLowerCase().
+### Error de `NaN` en el ticket promedio de días sin ventas
 
-        Por qué ya no ocurre: Al forzar que todas las entradas se comparen en minúsculas y sin espacios de sobra, variaciones como "medellín" y "Medellín" se unifican automáticamente bajo una única llave estandarizada ("medellín"), evitando duplicados en el reporte final.
+**Síntoma:** Al filtrar o calcular indicadores para una fecha sin transacciones, el ticket promedio u otra métrica relacionada podía arrojar `NaN` («Not a Number»).
 
-- Error de NaN en ticket promedio en días sin ventas
+**Entrada que lo produce:** Una fecha de consulta sin registros en `datos.js` (por ejemplo, `2025-12-25`), que da como resultado un arreglo vacío.
 
-    Síntoma: Al filtrar o calcular indicadores para una fecha que no registra transacciones, el valor del ticket promedio o métrica relacionada arrojaba NaN (Not a Number).
+**Hipótesis:** El sistema intentó calcular un promedio dividiendo el total acumulado (0) entre la cantidad de transacciones (0). JavaScript representa esa operación como `NaN`.
 
-    Entrada que lo produce: Una fecha de consulta inexistente o sin registros en el archivo datos.js (ej. "2025-12-25"), devolviendo un arreglo filtrado con longitud 0.
+**Prueba realizada:** Se filtró una fecha sin ventas y se intentó dividir directamente el total entre la cantidad de transacciones, sin validar previamente el divisor.
 
-    Hipótesis: El sistema intentó calcular un promedio dividiendo el total acumulado de dinero (0) entre el número total de transacciones (0), provocando una indeterminación matemática (división entre cero) que JavaScript maneja como NaN.
+**Causa:** Falta de una validación para comprobar que el divisor fuera distinto de cero antes de realizar la división.
 
-    Prueba realizada: Ejecución de la función de filtrado con una fecha vacía e intento de división aritmética directa sin validación previa.
+**Corrección y demostración en la versión actual:** Se agregó una condición ternaria para calcular el promedio solo cuando hay transacciones:
 
-    Causa: Ausencia de validación defensiva (guarda lógica) para comprobar el divisor antes de ejecutar la operación de división.
+```js
+const promedioDia =
+  transacciones.length > 0 ? totalVendidoDia / transacciones.length : 0;
+```
 
-    Corrección y Demostración en la versión actual:
+Si el arreglo está vacío, el resultado es `0` y se evita la división entre cero.
 
-        Se implementó una validación condicional estricta utilizando un operador ternario antes de calcular el promedio:
-        JavaScript
-
-        const promedioDia = transacciones.length > 0 ? totalVendidoDia / transacciones.length : 0;
-
-        Por qué ya no ocurre: Si la longitud del arreglo es 0, el sistema intercepta la operación y asigna directamente 0 como resultado en lugar de intentar la división, blindando el reporte contra el error NaN que reportó la gerencia.
 ### Predicción inicial
 
-Si `n` se multiplica por 10, se espera que el número de operaciones de `totalVendidoInstrumentado`, `ventaMayorInstrumentada` y `totalPorCiudadInstrumentado` también se multiplique aproximadamente por 10.
+Si `n` se multiplica por 10, se espera que el número de operaciones de `totalVendidoInstrumentado`, `ventaMayorInstrumentada` y `totalPorCiudadInstrumentado` también aumente aproximadamente 10 veces.
 
 ## Complejidad: predicciones y mediciones
 
@@ -99,3 +96,55 @@ Se compararon los contadores de operaciones y comparaciones para arreglos de 100
 | `totalPorCiudadInstrumentado` | Un ciclo visita cada venta y actualiza un `Map`; con las cinco ciudades del generador, cada actualización tiene un costo promedio constante. | 200, 2.000, 20.000, 200.000 | O(n) promedio |
 
 Al multiplicar `n` por 10, `primeraVentaInstrumentada` mantiene 1 operación; el total vendido y el agrupamiento por ciudad multiplican sus conteos por 10. `ventaMayorInstrumentada` pasa de 198 a 1.998 en el primer salto (aproximadamente 10,1 veces) y luego también crece aproximadamente 10 veces; su cuenta es `2 * (n - 1)`. Esto coincide con las predicciones. Ninguna función medida presenta crecimiento O(n²): el código no contiene ciclos anidados sobre las ventas.
+
+## Clientes recurrentes
+
+La función `clientesRecurrentes(ventas)` en `src/analitica.js` devuelve los identificadores de cliente que aparecen en más de una venta. Compara cada pareja de registros una sola vez (índices `i < j`) y agrega a un conjunto el cliente de las parejas iguales, evitando devolver el mismo cliente más de una vez.
+
+Con los 12 registros del Día 1, el resultado esperado y verificado es `["C01", "C02", "C03"]`.
+
+### Traza con 5 ventas
+
+Ejemplo de clientes, en el orden de las ventas: `C01`, `C02`, `C03`, `C01`, `C02`.
+
+| Venta comparada (i, j) | Clientes | ¿Coinciden? |
+|---|---|---|
+| 1, 2 | C01, C02 | No |
+| 1, 3 | C01, C03 | No |
+| 1, 4 | C01, C01 | Sí |
+| 1, 5 | C01, C02 | No |
+| 2, 3 | C02, C03 | No |
+| 2, 4 | C02, C01 | No |
+| 2, 5 | C02, C02 | Sí |
+| 3, 4 | C03, C01 | No |
+| 3, 5 | C03, C02 | No |
+| 4, 5 | C01, C02 | No |
+
+La traza realiza 10 comparaciones y devuelve `["C01", "C02"]`. Para `n` ventas se comparan todos los pares distintos: `(n - 1) + (n - 2) + ... + 1 = n(n - 1) / 2` comparaciones. Por tanto, el crecimiento es O(n²).
+
+### Costo oculto de `recurrentes.includes`
+
+Si se guarda el resultado en un arreglo `recurrentes` y, para cada venta, se consulta `recurrentes.includes(cliente)`, esa búsqueda recorre el arreglo elemento por elemento hasta encontrar el cliente o llegar al final. En el peor caso, cuando el cliente no está en el arreglo, una llamada puede hacer hasta `r` comparaciones, donde `r` es la cantidad de clientes ya guardados (y puede crecer hasta `n`). Repetir esa búsqueda para las `n` ventas puede sumar `1 + 2 + ... + (n - 1) = n(n - 1) / 2` comparaciones: O(n²), aunque el código tenga un solo ciclo visible. Por eso, reemplazar un ciclo anidado por `includes` no garantiza complejidad lineal.
+
+La implementación actual de `clientesRecurrentes` usa un `Set`, no `recurrentes.includes`; así evita esa búsqueda lineal de pertenencia. Sin embargo, compara cada pareja de ventas, por lo que su complejidad sigue siendo O(n²) debido al ciclo anidado.
+
+Al observar la tabla de tiempos, cuando `n` se duplica, el tiempo de ejecución tiende a cuadruplicarse (o a multiplicarse por un factor cercano a 4).
+
+### Estimación para n = 100.000
+
+- **Proporción de crecimiento:** `100.000 / 4.000 = 25`.
+- **Factor cuadrático:** `25² = 625`.
+- **Tiempo estimado:** `43,21 ms × 625 = 27.006,25 ms` (aproximadamente 27 segundos).
+- **Evaluación:** Como 27 segundos es menos de dos minutos (120.000 ms), el tiempo estimado está por debajo del límite establecido para ejecutar esta cantidad de registros en la terminal.
+
+### Estimación para n = 1.000.000 (historial anual masivo)
+
+- **Proporción de crecimiento:** `1.000.000 / 4.000 = 250`.
+- **Factor cuadrático:** `250² = 62.500`.
+- **Tiempo estimado:** `43,21 ms × 62.500 = 2.700.625 ms` (aproximadamente 45 minutos).
+
+Procesar un millón de registros con ciclos anidados de complejidad O(n²) podría tomar cerca de 45 minutos según esta estimación. Por ello, para ese volumen conviene una solución de complejidad lineal O(n).
+
+## Conclusión para la gerente
+
+El reporte se vuelve lento cuando aumentan las ventas porque, para encontrar clientes recurrentes, el sistema compara cada venta con muchas otras. Al crecer la cantidad de registros, esas revisiones aumentan mucho más rápido que las ventas: si se duplica el volumen, el tiempo puede acercarse a cuatro veces más. Para mantener el reporte ágil a medida que crece el negocio, conviene cambiar esa búsqueda por un método que revise cada venta una sola vez.

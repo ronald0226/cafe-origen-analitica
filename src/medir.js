@@ -5,6 +5,8 @@ const {
     ventaMayorInstrumentada,
     totalPorCiudadInstrumentado
 } = require('./analiticaInstrumentada');
+const { clientesRecurrentes } = require('./analitica');
+const { performance } = require('node:perf_hooks');
 const tamanos = [100,1000,10000,100000];
 const resultadosTabla = [];
 for (const n of tamanos) {
@@ -21,5 +23,20 @@ for (const n of tamanos) {
         totalPorCiudad_ops: contadorCiudades.operaciones + contadorCiudades.comparaciones
     });
 }
-console.log("=== BENCHMARK DE ESCALABILIDAD: OPERACIONES POR FUNCION ===");
+const tamanosTiempos = [1000, 2000, 4000, 8000, 16000];
+const resultadosTiempos = [];
+console.log("=== INICIANDO CRONOMETRAJE PARA CLIENTES RECURRENTES ===")
+for (const n of tamanosTiempos) {
+    const ventas = generarVentasNo(n);
+    const inicio = performance.now();
+    clientesRecurrentes(ventas);
+    const fin = performance.now();
+    resultadosTiempos.push({
+        'Tamaño (n)': n,
+        'Tiempo (ms)': `${(fin - inicio).toFixed(2)} ms`
+    });
+}
+console.log("\n=== BENCHMARK DE ESCALABILIDAD: OPERACIONES POR FUNCION ===");
 console.table(resultadosTabla);
+console.log("\n=== TABLA DE TIEMPOS: CLIENTES RECURRENTES O(n²) ===");
+console.table(resultadosTiempos);

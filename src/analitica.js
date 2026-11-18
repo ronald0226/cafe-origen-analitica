@@ -7,6 +7,20 @@ console.log("total vendido ($): " + totalVendidoM);
 function ventasDelDia(ventas, fechaBuscada) {
   return ventas.filter(venta => venta.fecha === fechaBuscada);
 }
+function clientesRecurrentes(ventas, contador = { comparaciones: 0 }) {
+  const recurrentes = new Set();
+
+  for (let i = 0; i < ventas.length; i++) {
+    for (let j = i + 1; j < ventas.length; j++) {
+      contador.comparaciones++;
+      if (ventas[i].cliente === ventas[j].cliente) {
+        recurrentes.add(ventas[i].cliente);
+      }
+    }
+  }
+
+  return Array.from(recurrentes);
+}
 function topProductosPorValor(ventas, k) {
   const valorPorProducto = new Map();
 
@@ -28,5 +42,6 @@ function topProductosPorValor(ventas, k) {
 module.exports = {
   totalVendidoM,
   ventasDelDia,
+  clientesRecurrentes,
   topProductosPorValor,
 };
