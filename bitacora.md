@@ -45,3 +45,41 @@ Cada registro de `ventas` contiene las siguientes propiedades:
 - **¿Qué transformo?** Normalizo el nombre del producto (quito espacios al inicio y al final y convierto a minúsculas para la clave) y calculo el valor de cada venta como `precio * cantidad`.
 - **¿Qué acumulo?** El valor vendido de cada producto en un mapa.
 - **¿Cómo agrupo?** Por nombre de producto normalizado, de modo que diferencias de mayúsculas y espacios externos no creen grupos separados; luego ordeno los grupos de mayor a menor valor y devuelvo los primeros `k`.
+Duplicidad de ciudades (Ej: "Bogotá" aparecía dos veces)
+
+    Síntoma: Al agrupar o listar las ventas por ciudad, una misma localidad aparecía fragmentada en múltiples entradas (ej. "Bogotá" y "Bogota", o "Medellín" y "medellín").
+
+    Entrada que lo produce: Transacciones con variaciones tipográficas en la propiedad ciudad debido a tildes omitidas, mayúsculas o espacios adicionales.
+
+    Hipótesis: El objeto diccionario utilizado como acumulador evaluaba las llaves de forma literal y estricta, tratando cada variante como una clave única e independiente en memoria.
+
+    Prueba realizada: Simulación de inserción de claves mixtas en un objeto de acumulación e inspección de las llaves resultantes en la consola.
+
+    Causa: Falta de normalización o estandarización de las cadenas de texto antes de utilizarlas como llaves de agrupación.
+
+    Corrección y Demostración en la versión actual:
+
+        Se aplica una limpieza previa a las cadenas de texto utilizando métodos de estandarización como .trim() y .toLocaleLowerCase().
+
+        Por qué ya no ocurre: Al forzar que todas las entradas se comparen en minúsculas y sin espacios de sobra, variaciones como "medellín" y "Medellín" se unifican automáticamente bajo una única llave estandarizada ("medellín"), evitando duplicados en el reporte final.
+
+- Error de NaN en ticket promedio en días sin ventas
+
+    Síntoma: Al filtrar o calcular indicadores para una fecha que no registra transacciones, el valor del ticket promedio o métrica relacionada arrojaba NaN (Not a Number).
+
+    Entrada que lo produce: Una fecha de consulta inexistente o sin registros en el archivo datos.js (ej. "2025-12-25"), devolviendo un arreglo filtrado con longitud 0.
+
+    Hipótesis: El sistema intentó calcular un promedio dividiendo el total acumulado de dinero (0) entre el número total de transacciones (0), provocando una indeterminación matemática (división entre cero) que JavaScript maneja como NaN.
+
+    Prueba realizada: Ejecución de la función de filtrado con una fecha vacía e intento de división aritmética directa sin validación previa.
+
+    Causa: Ausencia de validación defensiva (guarda lógica) para comprobar el divisor antes de ejecutar la operación de división.
+
+    Corrección y Demostración en la versión actual:
+
+        Se implementó una validación condicional estricta utilizando un operador ternario antes de calcular el promedio:
+        JavaScript
+
+        const promedioDia = transacciones.length > 0 ? totalVendidoDia / transacciones.length : 0;
+
+        Por qué ya no ocurre: Si la longitud del arreglo es 0, el sistema intercepta la operación y asigna directamente 0 como resultado en lugar de intentar la división, blindando el reporte contra el error NaN que reportó la gerencia.
