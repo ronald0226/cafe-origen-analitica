@@ -83,3 +83,19 @@ Duplicidad de ciudades (Ej: "Bogotá" aparecía dos veces)
         const promedioDia = transacciones.length > 0 ? totalVendidoDia / transacciones.length : 0;
 
         Por qué ya no ocurre: Si la longitud del arreglo es 0, el sistema intercepta la operación y asigna directamente 0 como resultado en lugar de intentar la división, blindando el reporte contra el error NaN que reportó la gerencia.
+### Predicción inicial
+
+Si `n` se multiplica por 10, se espera que el número de operaciones de `totalVendidoInstrumentado`, `ventaMayorInstrumentada` y `totalPorCiudadInstrumentado` también se multiplique aproximadamente por 10.
+
+## Complejidad: predicciones y mediciones
+
+Se compararon los contadores de operaciones y comparaciones para arreglos de 100, 1.000, 10.000 y 100.000 ventas. `primeraVentaInstrumentada` se agregó como referencia de tiempo constante. Los contadores son operaciones instrumentadas por el código, no una medición de tiempo real.
+
+| Función | Predicción según el código | Operaciones medidas (n = 100, 1.000, 10.000, 100.000) | Clasificación |
+|---|---|---|---|
+| `primeraVentaInstrumentada` | Accede solo a `ventas.length` y al índice `0`; no recorre el arreglo. | 1, 1, 1, 1 | O(1) |
+| `totalVendidoInstrumentado` | Un ciclo visita cada venta una vez y acumula su importe. | 100, 1.000, 10.000, 100.000 | O(n) |
+| `ventaMayorInstrumentada` | Un ciclo desde el segundo registro realiza una cantidad fija de trabajo por venta restante. | 198, 1.998, 19.998, 199.998 | O(n) |
+| `totalPorCiudadInstrumentado` | Un ciclo visita cada venta y actualiza un `Map`; con las cinco ciudades del generador, cada actualización tiene un costo promedio constante. | 200, 2.000, 20.000, 200.000 | O(n) promedio |
+
+Al multiplicar `n` por 10, `primeraVentaInstrumentada` mantiene 1 operación; el total vendido y el agrupamiento por ciudad multiplican sus conteos por 10. `ventaMayorInstrumentada` pasa de 198 a 1.998 en el primer salto (aproximadamente 10,1 veces) y luego también crece aproximadamente 10 veces; su cuenta es `2 * (n - 1)`. Esto coincide con las predicciones. Ninguna función medida presenta crecimiento O(n²): el código no contiene ciclos anidados sobre las ventas.
