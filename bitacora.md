@@ -148,3 +148,35 @@ Procesar un millón de registros con ciclos anidados de complejidad O(n²) podr�
 ## Conclusión para la gerente
 
 El reporte se vuelve lento cuando aumentan las ventas porque, para encontrar clientes recurrentes, el sistema compara cada venta con muchas otras. Al crecer la cantidad de registros, esas revisiones aumentan mucho más rápido que las ventas: si se duplica el volumen, el tiempo puede acercarse a cuatro veces más. Para mantener el reporte ágil a medida que crece el negocio, conviene cambiar esa búsqueda por un método que revise cada venta una sola vez.
+
+## Comparación de las dos versiones para totalizar por ciudad
+
+Sea `n` la cantidad de ventas y `m` la cantidad de ventas que coinciden con la ciudad buscada (`m <= n`).
+
+- `totalCiudadCadena` hace dos recorridos sobre todas las ventas (`map` y `filter`) y dos sobre las coincidencias (el segundo `map` y `reduce`): `2n + 2m` operaciones, como máximo `4n`. Al eliminar la constante multiplicativa, su tiempo es **O(n)**. Crea tres arreglos intermedios, por lo que su espacio adicional es **O(n)**.
+- `totalCiudadUnaPasada` revisa cada venta una sola vez: `n` operaciones, así que su tiempo también es **O(n)**. Solo mantiene variables de acumulación y no crea arreglos intermedios, por lo que su espacio adicional es **O(1)**.
+
+Ambas tienen el mismo orden de crecimiento temporal. La versión encadenada realiza más trabajo por sus recorridos adicionales, pero Big O omite factores constantes (por ejemplo, `4n` se simplifica a `O(n)`); por eso no se clasifica como `O(4n)`. Esto no significa que tarden exactamente lo mismo, sino que ambas crecen linealmente con el tamaño del arreglo.
+
+## Complejidad espacial de las funciones del motor
+
+Se considera memoria adicional, sin contar el arreglo `ventas` que recibe cada función. Sea `n` la cantidad de ventas, `u` la cantidad de ciudades distintas y `p` la cantidad de productos distintos.
+
+| Función | Espacio adicional | Motivo |
+|---|---|---|
+| `ventasDelDia` | **O(n)** | `filter` crea un arreglo nuevo con las ventas que coinciden; en el peor caso contiene las `n` ventas. |
+| `clientesRecurrentes` | **O(n)** | El `Set` de clientes recurrentes y el arreglo devuelto pueden crecer con la cantidad de ventas. |
+| `topProductosPorValor` | **O(n)** | El `Map` guarda hasta `p` productos y `Array.from` crea un arreglo para ordenarlos y devolverlos. En el peor caso `p = n`. |
+| `totalCiudadCadena` | **O(n)** | Crea tres arreglos intermedios que, en el peor caso, pueden contener hasta `n` elementos. |
+| `totalCiudadUnaPasada` | **O(1)** | Solo usa variables escalares para la ciudad actual y el total; no crea colecciones proporcionales a los datos. |
+| `totalVendidoInstrumentado` | **O(1)** | Mantiene un total, un índice y una referencia a la venta actual. |
+| `primeraVentaInstrumentada` | **O(1)** | Devuelve una referencia a una venta, sin crear una colección. |
+| `ventaMayorInstrumentada` | **O(1)** | Mantiene la referencia a la venta mayor y valores temporales escalares. |
+| `totalPorCiudadInstrumentado` | **O(n)** en el peor caso | El `Map` guarda un registro por ciudad distinta y `Array.from` crea otro arreglo con esos registros: **O(u)**, donde `u <= n`. |
+| `generarVentasNo` | **O(n)** | Construye y devuelve un arreglo con `n` ventas. |
+
+`totalPorCiudadInstrumentado` y `topProductosPorValor` no usan espacio constante en el caso general: sus mapas y arreglos pueden crecer con los valores distintos presentes en los datos. Si el dominio está acotado (por ejemplo, el generador siempre usa exactamente cinco ciudades o cinco productos), el espacio de esas colecciones es **O(1)** respecto de `n`; sin esa garantía, su clasificación de peor caso es **O(n)**.
+
+## Decisión de implementación para totalizar por ciudad
+
+Dejaré `totalCiudadUnaPasada` como la versión recomendada para el motor. Aunque `totalCiudadCadena` expresa la transformación de forma declarativa y puede resultar más familiar de leer, crea tres arreglos intermedios y usa **O(n)** de espacio adicional. La versión de una pasada requiere seguir explícitamente el ciclo, pero sus variables nombradas hacen clara la normalización y la acumulación; además, evita esos arreglos y usa **O(1)** de espacio adicional. Ambas son **O(n)** en tiempo, pero la versión de una pasada reduce las asignaciones y el consumo de memoria al crecer el número de ventas. Se conserva `totalCiudadCadena` como referencia para la comparación de resultados en `medir.js`, no como la opción recomendada para el uso normal del motor.

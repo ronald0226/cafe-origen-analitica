@@ -38,10 +38,43 @@ function topProductosPorValor(ventas, k) {
     .sort((a, b) => b.valor - a.valor)
     .slice(0, Math.max(0, Math.floor(k)));
 }
-
+function totalCiudadCadena (ventas, ciudadBuscada) {
+  const ciudadFiltro = typeof ciudadBuscada === 'string'
+    ? ciudadBuscada.trim().toLowerCase()
+    : '';
+  return ventas
+    .map(venta => ({
+      ...venta,
+      ciudadNormalizada: typeof venta.ciudad === 'string'
+        ? venta.ciudad.trim().toLowerCase()
+        : ''
+    }))
+    .filter(venta => venta.ciudadNormalizada === ciudadFiltro)
+    .map(venta => venta.total ?? ((venta.precio || 0) * (venta.cantidad || 0)))
+    .reduce((acumulador, valorActual) => acumulador + valorActual, 0);
+}
+function totalCiudadUnaPasada(ventas, ciudadBuscada) {
+  const ciudadFiltro = typeof ciudadBuscada === 'string'
+    ? ciudadBuscada.trim().toLowerCase()
+    : '';
+  let total = 0;
+  for (let i = 0; i < ventas.length; i++) {
+    const venta = ventas[i];
+    const ciudadActual = typeof venta.ciudad === 'string'
+      ? venta.ciudad.trim().toLowerCase()
+      : '';
+    if (ciudadActual === ciudadFiltro) {
+      const valorVenta = venta.total ?? ((venta.precio || 0) * (venta.cantidad || 0));
+      total += valorVenta;
+    }
+  }
+  return total;
+}
 module.exports = {
   totalVendidoM,
   ventasDelDia,
   clientesRecurrentes,
   topProductosPorValor,
+  totalCiudadCadena,
+  totalCiudadUnaPasada,
 };

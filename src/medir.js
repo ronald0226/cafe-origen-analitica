@@ -36,6 +36,20 @@ for (const n of tamanosTiempos) {
         'Tiempo (ms)': `${(fin - inicio).toFixed(2)} ms`
     });
 }
+const { totalCiudadCadena, totalCiudadUnaPasada } = require('./analitica');
+const ventas10k = generarVentasNo (10000);
+const ciudadPrueba = 'Medellin';
+const resultadoCadena = totalCiudadCadena (ventas10k, ciudadPrueba);
+const resultadoUnaPasada = totalCiudadUnaPasada (ventas10k, ciudadPrueba);
+const sonIguales = resultadoCadena === resultadoUnaPasada;
+console.log('=== COMPROBACIÓN CON 10.000 VENTAS ===');
+console.log(`ciudad evaluada: ${ciudadPrueba}`);
+console.log(`totalCiudadCadena: ${resultadoCadena}`);
+console.log(`totalCiudadUnaPasada: ${resultadoUnaPasada}`);
+console.log(`¿coinciden exactamente?: ${sonIguales}`);
+if (!sonIguales) {
+    console.warn('¡Atencion! Hay diferencia entre ambos resultados. Revise los campos del objeto venta (ej. total, precio, cantidad o ciudad).');
+}
 console.log("\n=== BENCHMARK DE ESCALABILIDAD: OPERACIONES POR FUNCION ===");
 console.table(resultadosTabla);
 console.log("\n=== TABLA DE TIEMPOS: CLIENTES RECURRENTES O(n²) ===");
