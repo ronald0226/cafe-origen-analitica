@@ -70,6 +70,24 @@ function totalCiudadUnaPasada(ventas, ciudadBuscada) {
   }
   return total;
 }
+function clientesRecurrentesOptimizada (ventas) {
+  if (!Array.isArray(ventas)) return [];
+  const conteoPorCliente = new map ();
+  const recurrentes = [];
+  for (let i = 0; i < ventas.length; i++) {
+    const rawCliente = ventas[i]?.cliente;
+    if (typeof rawCliente !== "string") continue;
+    const cliente = rawCliente.trim().toLowerCase();
+    if (!cliente) continue;
+    const comprasPrevias = conteoPorCliente.get(cliente) || 0;
+    const totalCompras = comprasPrevias + 1;
+    conteoPorCliente.set(cliente, totalCompras);
+    if (totalCompras === 2) {
+      recurrentes.push(cliente);
+    }
+  }
+  return recurrentes;
+}
 module.exports = {
   totalVendidoM,
   ventasDelDia,

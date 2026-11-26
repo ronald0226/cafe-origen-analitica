@@ -181,4 +181,40 @@ Se considera memoria adicional, sin contar el arreglo `ventas` que recibe cada f
 
 Dejaré `totalCiudadUnaPasada` como la versión recomendada para el motor. Aunque `totalCiudadCadena` expresa la transformación de forma declarativa y puede resultar más familiar de leer, crea tres arreglos intermedios y usa **O(n)** de espacio adicional. La versión de una pasada requiere seguir explícitamente el ciclo, pero sus variables nombradas hacen clara la normalización y la acumulación; además, evita esos arreglos y usa **O(1)** de espacio adicional. Ambas son **O(n)** en tiempo, pero la versión de una pasada reduce las asignaciones y el consumo de memoria al crecer el número de ventas. Se conserva `totalCiudadCadena` como referencia para la comparación de resultados en `medir.js`, no como la opción recomendada para el uso normal del motor.
 - **Observación recibida:**                                    
-  > *"En la tabla y en la sección de Riesgos, mencionas que `clientesRecurrentes` con `Map` es $O(n)$ en tiempo y $O(n)$ en espacio, pero ¿qué pasa si los nombres de los clientes vienen con espacios extras o mayúsculas distintas como `'Ana'` y `' ana '`? ¿Eso afectaría el conteo o la memoria del `Map`?"*
+   *"En la tabla y en la sección de Riesgos, mencionas que `clientesRecurrentes` con `Map` es $O(n)$ en tiempo y $O(n)$ en espacio, pero ¿qué pasa si los nombres de los clientes vienen con espacios extras o mayúsculas distintas como `'Ana'` y `' ana '`? ¿Eso afectaría el conteo o la memoria del `Map`?"*
+
+   ## Optimizacion de Clientes Recurrentes ('0(n)')
+# 1. Entender el problema
+- **Entradas:** Un arreglo 'ventas' donde cada elemento representa una venta (por ejemplo, con propiedades como 'cliente', 'ciudad', 'total', 'precio', 'cantidad').
+
+**Salida:** Un arreglo con los identificadores/nombres de los **clientes recurrentes**(aquellos que registran **2 o mas compras**, sin duplicar nombres en la respuesta).
+
+**Restricciones y metas:**
+-Tiempo de respuesta **menor a 1 segundo** (< '1000 ms') con 'n = 100.000' ventas.
+-Evitar busquedas repetitivas que disparen el tiempo de ejecucion al crecer 'n'.
+-Manejar datos incompletos o irregulares sin que la funcion reviente.
+# 2. Ejemplos y casos borde
+**Caso normal:** `ventas` con `'Ana'`, `'Luis'`, `'Ana'`, `'Sofía'`, `'Ana'`
+
+**Arreglo vacio ('[]'):**
+**Sin recurrencias:**
+
+**Casos borde / datos sucios:**
+-Ventas sin propiedad 'cliente', con 'null', 'undefined' o cadena vacia '""'
+-Variaciones de escritura o espacios (ej. `'Ana'` y `' ana '` o `'ANA'`)
+-Exactamente 2 compras vs. 3 o mas compras
+
+# 3. Fuerza bruta y su complejidad 
+**Idea de fuerza bruta:** Recorrer 'ventas' con un ciclo externp y por cada venta, volver a recorrer o buscar en estructuras acumuladas usando metodos como `.includes()` o ciclos anidados para verificar si ya había comprado antes y si ya estaba en `recurrentes`.
+
+**Complejidad temporal:** **$O(n^2)$** en el peor caso, porque por cada uno de los 'n' elementos se realizan comparaciones adicionales que crecen con 'n'. con '100.000' ventas esto escala a decenas de miles de millones de operaciones (minutos de espera).
+- **Complejidad espacial:** **$O(n)$** por el arreglo `recurrentes` (y posibles arreglos intermedios).
+
+### 4. Idea de optimización (Búsqueda en tiempo constante)        
+- **Estructura elegida:** Un **`Map`** (o diccionario/tabla hash) para llevar el conteo de compras por cliente, más un arreglo `recurrentes` para el resultado final.
+- **Por qué funciona:** En JavaScript, `map.get(clave)` y `map.set(clave, valor)` operan en **tiempo promedio constante $O(1)$**, sin importar si hay 10 o 100.000 clientes distintos.
+- **Cómo elimina el trabajo repetido:**
+  - En una **sola pasada** `O(n)` sobre `ventas`, consultamos cuántas compras lleva el cliente en el `Map`, sumamos `1` y guardamos el nuevo conteo.
+  - Solo cuando el conteo pasa de `1` a `2` (`nuevoConteo === 2`), agregamos el cliente a `recurrentes`. Así nunca repetimos búsquedas con `.includes()` ni duplicamos entradas.
+- - **Complejidad resultante:** Tiempo **$O(n)$** (con `100.000` ventas corre en pocos milisegundos, muy por debajo de 1 segundo) y espacio **$O(n)$** acotado por la cantidad de clientes únicos.
+
