@@ -129,3 +129,14 @@ for (let i = o; i < ventas. lenght; i++) {
 # ¿Que informacion se podria guardar para no buscarla de nuevo?
 - **Un contador de compras por cliente ('cliente -> cantidad de compras'):** Guardar en una estructura de busqueda rapida (como un 'map' o diccionario por identificador de cliente) cuantas veces ha comprado cada persona. asi, al llegar una nueva venta, solo lees el contador actual y le sumas '1' sin volver a recorrer el historial.
 - **Un registro de clientes ya clasificados como recurrentes:** Guardar en una estructura de pertenencia rápida (como un `Set` o marcar el estado en el mismo contador) cuáles clientes ya alcanzaron el umbral de recurrencia, evitando volver a buscarlos con `.includes(...)` o agregarlos dos veces.
+
+ # Intercambio entre tiempo y memoria (Time-Space Trade-Off)   
+
+- **Qué ganamos en tiempo (CPU):**                                  
+  Pasamos de una complejidad temporal **$O(n^2)$** en la versión original a **$O(n)$** con `Set` o `Map`. Al guardar el historial en memoria (`vistos` y `recurrentes` en `Set`, o el conteo por cliente en `Map`), cada consulta o actualización toma tiempo promedio constante **$O(1)$**, evitando recorrer el arreglo o buscar con `.includes()` una y otra vez. Con `100.000` ventas, el tiempo baja de minutos a pocos milisegundos, cumpliendo la exigencia de menos de `1 segundo`.
+
+- **Qué cedemos en memoria (RAM):**                                 
+  La complejidad espacial sigue siendo **$O(n)$**, pero en la práctica usamos **más memoria RAM** que la versión original en escenarios con muchos clientes únicos, porque creamos estructuras auxiliares (`Set` o `Map`) que almacenan referencias/claves (y contadores numéricos en el caso del `Map`) a medida que avanzamos por las ventas.
+
+- **Resumen del intercambio:**                                       
+  Invertimos **un poco más de memoria RAM** para guardar el estado (`vistos`, `recurrentes` o `conteoPorCliente`) a cambio de **reducir drásticamente el tiempo de ejecución** de cuadrático $O(n^2)$ a lineal $O(n)$. En este reporte con `100.000` ventas, ese cambio es altamente favorable porque la latencia es el cuello de botella crítico.

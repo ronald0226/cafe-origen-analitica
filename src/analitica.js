@@ -88,6 +88,46 @@ function clientesRecurrentesOptimizada (ventas) {
   }
   return recurrentes;
 }
+function clientesRecurrentesSet(ventas) {
+  if (!Array.isArray(ventas)) return [];
+  const vistos = new set ();
+  const recurrentes = new set ();
+  for (let i = 0; i < ventas.length; i++) {
+    const rawCliente = ventas[i]?.cliente;
+    if (typeof rawCliente !== "string") continue;
+    const cliente = rawCliente.trim().toLowerCase();
+    if (!cliente) continue;
+    if (vistos.has(cliente)) {
+      recurrentes.add(cliente);
+    } else {
+      vistos.add(cliente);
+    }
+  }
+  return Array.from(recurrentes);
+}
+function comprasPorCliente(ventas) {
+  const conteo = new map();
+  if (!Array.isArray(ventas)) return conteo;
+  for (let i = 0; i < ventas.length; i++) {
+    const rawCliente = ventas[i]?.cliente;
+    if (typeof rawCliente !== "string") continue;
+    const cliente =rawCliente.trim().toLowerCase();
+    if (!cliente) continue;
+    const cantidadActual = conteo.get(cliente) || 0;
+    conteo.set(cliente, cantidadActual + 1);
+  }
+  return conteo;
+}
+function recurrentesDesdeCompras (ventas) {
+  const mapaCompras = comprasPorcliente (ventas);
+  const recurrentes = [];
+  for (const [cliente, totalcompras] of mapaCompras.entries()) {
+    if (totalCompras >= 2) {
+      recurrentes.push(cliente);
+    }
+  }
+  return recurrentes;
+}
 module.exports = {
   totalVendidoM,
   ventasDelDia,

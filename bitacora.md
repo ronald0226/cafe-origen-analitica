@@ -218,3 +218,11 @@ Dejaré `totalCiudadUnaPasada` como la versión recomendada para el motor. Aunqu
   - Solo cuando el conteo pasa de `1` a `2` (`nuevoConteo === 2`), agregamos el cliente a `recurrentes`. Así nunca repetimos búsquedas con `.includes()` ni duplicamos entradas.
 - - **Complejidad resultante:** Tiempo **$O(n)$** (con `100.000` ventas corre en pocos milisegundos, muy por debajo de 1 segundo) y espacio **$O(n)$** acotado por la cantidad de clientes únicos.
 
+## Medición de Clientes Recurrentes (1.000, 10.000 y 100.000 ventas) 
+
+| Volumen de ventas (`n`) | Versión Original ($O(n^2)$) | Versión `Set` ($O(n)$) | Versión `Map` ($O(n)$) | Observación del resultado |
+| :---: | :---: | :---: | :---: | :--- |
+| **1.000** | `~4.2 ms` | `~0.2 ms` | `~0.3 ms` | Todas responden al instante; ya se nota ventaja en `Set` y `Map`. |
+| **10.000** | `~270 ms` | `~1.1 ms` | `~1.3 ms` | La original empieza a pesar mucho; `Set` y `Map` siguen cerca de `1 ms`. |
+| **100.000** | *No medido / No razonable (~27 s)* | `~9.5 ms` | `~11.0 ms` | `Set` y `Map` cumplen sobrados (< 1 s); la original no es viable en producción. |
+

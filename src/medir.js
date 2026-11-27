@@ -7,7 +7,6 @@ const {
 } = require('./analiticaInstrumentada');
 const { clientesRecurrentes } = require('./analitica');
 const { performance } = require('node:perf_hooks');
-const tamanos = [100,1000,10000,100000];
 const resultadosTabla = [];
 for (const n of tamanos) {
     const ventas = generarVentasNo(n);
@@ -42,6 +41,43 @@ const ciudadPrueba = 'Medellin';
 const resultadoCadena = totalCiudadCadena (ventas10k, ciudadPrueba);
 const resultadoUnaPasada = totalCiudadUnaPasada (ventas10k, ciudadPrueba);
 const sonIguales = resultadoCadena === resultadoUnaPasada;
+const { performance } = require ('perf_hooks');
+const generarVentas = require ('./generador');
+const {
+    clientesRecurrentesOriginal,
+    clientesRecurrentesSet,
+    clientesRecurrentesMap
+} = require('./analitica');
+function medirEjecucion(fn, datos) {
+    const inicio = performance.now();
+    const resultado = fn(datos);
+    const fin = performance.now();
+    return {
+        ms: Number((fin - inicio).toFixed(2)),
+        cantidad: resultado.length
+    };
+}
+const tamanos = [1000, 10000, 100000];
+for (let i = 0; i < tamanos.length; i++) {
+    const n = tamanos [i];
+    const dataset = generarVentas(n);
+    const medSet = medirEjecucion(clientesRecurrentesSet, dataset);
+}
+for (let i = 0; i < tamanos.length; i++) {
+    const n = tamanos[i];
+    const loteVentas = generarVentasNo(n);
+    const resSet =medirRecurrentes (analiticaRecurrentes.clientesRecurrentesSet, loteVentas);
+    const resMap = medirRecurrentes(analiticaRecurrentes.clientesRecurrentesMap, loteVentas);
+    let resOriginalTexto = "omitida (>10.000 no razonable)";
+    if (n <= 10000) {
+        const resOrig = medirRecurrentes(analiticaRecurrentes.clientesRecurrentesOriginal, loteVentas);
+        resOriginalTexto = `${resOrig.ms} ms (${resOrig.totalRecurrentes})`;
+    }
+    console.log(`Escala n = ${n}`);
+    console.log(`  Original: ${resOriginalTexto}`);
+    console.log(`  Set:      ${resSet.ms} ms (${resSet.totalRecurrentes})`);
+    console.log(`  Map:      ${resMap.ms} ms (${resMap.totalRecurrentes})`);
+}
 console.log('=== COMPROBACIÓN CON 10.000 VENTAS ===');
 console.log(`ciudad evaluada: ${ciudadPrueba}`);
 console.log(`totalCiudadCadena: ${resultadoCadena}`);
